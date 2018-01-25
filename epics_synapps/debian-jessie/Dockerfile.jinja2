@@ -1,0 +1,54 @@
+FROM {{ base_img }}
+
+MAINTAINER Philipp Klaus <philipp.l.klaus@web.de>
+
+{% if cross_build %}
+RUN [ "cross-build-start" ]
+{% endif %}
+
+USER root
+
+RUN apt-get update \
+ && apt-get install --no-install-recommends -yq \
+  # for synapps:
+  openssl \
+  re2c \
+ && apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /var/cache/apt
+
+RUN mkdir /epics/modules
+
+WORKDIR /epics/modules
+
+#COPY ./synApps_5_8.tar.gz ./
+RUN ls \
+ && curl --insecure -L -O https://www1.aps.anl.gov/files/download/BCDA/synApps/tar/synApps_5_8.tar.gz \
+ # as of 2018-01-11, the certificate is expired, thus the use of --insecure
+ && tar -xf synApps_5_8.tar.gz \
+ && rm synApps_5_8.tar.gz
+
+WORKDIR /epics/modules/synApps_5_8/support
+
+RUN sed -i 's|SUPPORT=/home/oxygen/MOONEY/distrib/synApps_5_8/support|SUPPORT=/epics/modules/synApps_5_8/support|' configure/RELEASE \
+ && sed -i 's|EPICS_BASE=/home/oxygen/MOONEY/epics/bazaar/base-3.15|EPICS_BASE=/epics/base/|' configure/RELEASE
+RUN make release
+RUN for MODULE in XXX DEVIOCSTATS CAPUTRECORDER ALLEN_BRADLEY DAC128V IP330 IPUNIDIG LOVE IP VAC SOFTGLUE QUADEM DELAYGEN CAMAC VME DXP; do sed -i "/^$MODULE/d" configure/RELEASE; done
+RUN cat configure/RELEASE
+
+RUN sed -i 's|MODULE_LIST =  SNCSEQ ALLEN_BRADLEY|MODULE_LIST =  SNCSEQ|' Makefile \
+ && sed -i 's|MODULE_LIST = SSCAN DEVIOCSTATS|MODULE_LIST = SSCAN|' Makefile \
+ && sed -i 's|MODULE_LIST = CAMAC QUADEM|MODULE_LIST = |' Makefile \
+ && sed -i 's|MODULE_LIST  = BUSY STD DAC128V IP330 IPUNIDIG LOVE|MODULE_LIST  = BUSY STD|' Makefile \
+ && sed -i 's|MODULE_LIST  = DELAYGEN MCA VME MOTOR AREA_DETECTOR|MODULE_LIST  = MCA|' Makefile \
+ && sed -i 's|MODULE_LIST += IPAC AUTOSAVE ALIVE CAPUTRECORDER|MODULE_LIST += IPAC AUTOSAVE ALIVE|' Makefile \
+ && sed -i 's|MODULE_LIST += IP OPTICS STREAM MODBUS VAC SOFTGLUE|MODULE_LIST += OPTICS STREAM MODBUS|' Makefile \
+ && grep MODULE_LIST Makefile
+
+RUN make release
+# for debugging build errors, you may change -j4 to -j1
+RUN make -j4
+
+RUN echo $PATH $EPICS_ROOT $EPICS_BASE $EPICS_BASE_BIN
+
+#{% if cross_build %}
+#RUN [ "cross-build-end" ]
+#{% endif %}
