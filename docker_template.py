@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-# Via http://pydanny.com/jinja2-quick-load-function.html
-from jinja2 import FileSystemLoader, Environment
-
 def render_from_template(directory, template_name, **kwargs):
+    # Via http://pydanny.com/jinja2-quick-load-function.html
+    from jinja2 import FileSystemLoader, Environment
     loader = FileSystemLoader(directory)
     env = Environment(loader=loader)
     template = env.get_template(template_name)
@@ -22,6 +21,8 @@ def main():
         template_parser.add_argument('--tag', required=True, help='The tag to build (implies the base image to derive from).')
     args = parser.parse_args()
     args.build_config_file = os.path.abspath(args.build_config_file)
+    try: import jinja2
+    except ImportError: parser.error("Please install the Python package jinja2 to make this script work.")
     # load build_configuration.py from workdir
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 5:
         import importlib.util
