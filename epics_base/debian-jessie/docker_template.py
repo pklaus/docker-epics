@@ -3,8 +3,6 @@
 # Via http://pydanny.com/jinja2-quick-load-function.html
 from jinja2 import FileSystemLoader, Environment
 
-from build_configuration import BUILDS
-
 def render_from_template(directory, template_name, **kwargs):
     loader = FileSystemLoader(directory)
     env = Environment(loader=loader)
@@ -12,21 +10,38 @@ def render_from_template(directory, template_name, **kwargs):
     return template.render(**kwargs)
 
 def main():
-    import argparse
+    import argparse, sys, os
     parser = argparse.ArgumentParser()
     parser.add_argument('--template-file', '-f', metavar='Dockerfile.jinja2', default='Dockerfile.jinja2', help='The Dockerfile template to use.')
+    parser.add_argument('--build-config-file', '-b', default='./build_configuration.py', help='The Python file containing the build configuration.')
     subparsers = parser.add_subparsers(dest='action')
+    parser_render = subparsers.add_parser('list-tags', help='Returns the list of available tags')
     parser_render = subparsers.add_parser('render', help='Render the template')
     parser_build =  subparsers.add_parser('build',  help='Render the template and build the image')
     for template_parser in parser_render, parser_build:
-        template_parser.add_argument('--tag', choices=BUILDS.keys(), required=True, help='The tag to build (implies the base image to derive from).')
+        template_parser.add_argument('--tag', required=True, help='The tag to build (implies the base image to derive from).')
     args = parser.parse_args()
-    kwargs = BUILDS[args.tag]
-    content = render_from_template('.', args.template_file, **kwargs)
-    with open('Dockerfile', 'w') as f:
-        f.write(content)
-    if 'build' in args.action:
-        import os
-        os.system(f'docker build -t {args.tag} .')
+    args.build_config_file = os.path.abspath(args.build_config_file)
+    # load build_configuration.py from workdir
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(args.build_config_file, args.build_config_file)
+    build_configuration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(build_configuration)
+    BUILDS = build_configuration.BUILDS
+    # no action chosen
+    if not args.action: parser.error("Please choose an action.")
+    # list-tags
+    if args.action == 'list-tags':
+        for tag in BUILDS.keys(): print(tag)
+        sys.exit(0)
+    # render
+    if args.action in ('render', 'build'):
+        kwargs = BUILDS[args.tag]
+        content = render_from_template('.', args.template_file, **kwargs)
+        with open('Dockerfile', 'w') as f:
+            f.write(content)
+        # build
+        if 'build' in args.action:
+            os.system(f'docker build -t {args.tag} .')
 
 if __name__ == "__main__": main()
