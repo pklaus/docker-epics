@@ -1,8 +1,10 @@
-FROM resin/raspberry-pi-debian:jessie
+FROM {{ base_img }}
 
 MAINTAINER Philipp Klaus <philipp.l.klaus@web.de>
 
+{% if cross_build %}
 RUN [ "cross-build-start" ]
+{% endif %}
 
 USER root
 
@@ -88,4 +90,6 @@ CMD procServ --name=example -i ^C^D^] -c ~/EPICS/IOCs/EXAMPLE/iocBoot/iocEXAMPLE
 #COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 #CMD ["/usr/bin/supervisord"]
 
+{% if cross_build %}
 RUN [ "cross-build-end" ]
+{% endif %}
