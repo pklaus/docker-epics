@@ -23,10 +23,18 @@ def main():
     args = parser.parse_args()
     args.build_config_file = os.path.abspath(args.build_config_file)
     # load build_configuration.py from workdir
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(args.build_config_file, args.build_config_file)
-    build_configuration = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(build_configuration)
+    if sys.version_info[0] >= 3 and sys.version_info[1] >= 5:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(args.build_config_file, args.build_config_file)
+        build_configuration = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(build_configuration)
+    elif sys.version_info[0] >= 3 and sys.version_info[1] in (3, 4):
+        from importlib.machinery import SourceFileLoader
+        build_configuration = SourceFileLoader(args.build_config_file, args.build_config_file).load_module()
+    elif sys.version_info[0] == 2:
+        import imp
+        build_configuration = imp.load_source(args.build_config_file, args.build_config_file)
+    else: parser.error("Couln't detect python version.")
     BUILDS = build_configuration.BUILDS
     # no action chosen
     if not args.action: parser.error("Please choose an action.")
@@ -43,6 +51,6 @@ def main():
             f.write(content)
         # build
         if 'build' in args.action:
-            os.system(f'docker build -t {args.tag} .')
+            os.system('docker build -t {tag} .'.format(tag=args.tag))
 
 if __name__ == "__main__": main()
