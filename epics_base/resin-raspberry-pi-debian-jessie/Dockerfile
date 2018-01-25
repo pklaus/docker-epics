@@ -1,0 +1,91 @@
+FROM resin/raspberry-pi-debian:jessie
+
+MAINTAINER Philipp Klaus <philipp.l.klaus@web.de>
+
+RUN [ "cross-build-start" ]
+
+USER root
+
+RUN apt-get update \
+ && apt-get install --no-install-recommends -yq \
+  # for epics_base:
+  build-essential \
+  procserv \
+  telnet \
+  curl \
+  ca-certificates \
+  libreadline-dev \
+  # generally good: \
+  #git \
+  # areadetector dependencies:
+  #libhdf5-dev \
+  #libx11-dev \
+  #libxext-dev \
+  #libxml2-dev \
+  #libpng12-dev \
+  #libbz2-dev \
+  #libfreetype6-dev \
+ && apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /var/cache/apt
+
+RUN mkdir /epics && mkdir /epics/iocs
+
+WORKDIR /epics
+ENV EPICS_HOST_ARCH=linux-arm
+
+RUN curl --insecure -L -O https://www.aps.anl.gov/epics/download/base/base-3.15.5.tar.gz \
+ # as of 2018-01-11, the certificate is expired, thus the use of --insecure
+ && tar -xf base-3.15.5.tar.gz \
+ && ln -s ./base-3.15.5 ./base
+
+RUN cd /epics/base && make -j8
+
+EXPOSE 5064 5065
+
+ENV EPICS_ROOT=/epics
+ENV EPICS_BASE=${EPICS_ROOT}/base
+ENV EPICS_BASE_BIN=${EPICS_BASE}/bin/${EPICS_HOST_ARCH} \
+    EPICS_BASE_LIB=${EPICS_BASE}/lib/${EPICS_HOST_ARCH} \
+    LD_LIBRARY_PATH=${EPICS_BASE_LIB}:${LD_LIBRARY_PATH}
+ENV PATH=${PATH}:${EPICS_BASE_BIN}
+
+RUN echo $PATH $EPICS_ROOT $EPICS_BASE $EPICS_BASE_BIN
+
+#RUN echo "#!/bin/sh\necho linux-arm" > /epics/base/startup/EpicsHostArch
+#RUN chmod +x /epics/base/startup/EpicsHostArch
+
+### add user for control stuff
+
+RUN useradd \
+      --create-home \
+      --home /scs \
+      --gid users \
+      --groups users \
+      --shell /bin/bash \
+      scs
+
+### example IOC
+
+ENV USER root
+#USER scs
+#ENV USER scs
+
+RUN mkdir -p /epics/iocs/example \
+ && cd /epics/iocs/example \
+ && makeBaseApp.pl -t example EXAMPLE \
+ && make \
+ && makeBaseApp.pl -i -t example EXAMPLE \
+ && make \
+ && chmod +x iocBoot/iocEXAMPLE/st.cmd
+
+
+CMD procServ --name=example -i ^C^D^] -c ~/EPICS/IOCs/EXAMPLE/iocBoot/iocEXAMPLE 2048 ./st.cmd
+# docker run -p 2048:2048 pklaus/epics_base
+
+#EXPOSE 2048
+ 
+
+#RUN apt-get install -yq supervisor
+#COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+#CMD ["/usr/bin/supervisord"]
+
+RUN [ "cross-build-end" ]
