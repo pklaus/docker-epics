@@ -32,7 +32,7 @@ RUN apt-get update \
 RUN mkdir /epics && mkdir /epics/iocs
 
 WORKDIR /epics
-ENV EPICS_HOST_ARCH=linux-arm
+ENV EPICS_HOST_ARCH={{epics_host_arch}}
 
 RUN curl --insecure -L -O https://www.aps.anl.gov/epics/download/base/base-3.15.5.tar.gz \
  # as of 2018-01-11, the certificate is expired, thus the use of --insecure
