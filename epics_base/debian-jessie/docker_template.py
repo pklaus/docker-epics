@@ -36,7 +36,8 @@ def main():
         sys.exit(0)
     # render
     if args.action in ('render', 'build'):
-        kwargs = BUILDS[args.tag]
+        args.tag_end = args.tag.rpartition(':')[2]
+        kwargs = BUILDS[args.tag_end]
         content = render_from_template('.', args.template_file, **kwargs)
         with open('Dockerfile', 'w') as f:
             f.write(content)
