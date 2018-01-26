@@ -25,6 +25,7 @@ def main():
     try: import jinja2
     except ImportError: parser.error("Please install the Python package jinja2 to make this script work.")
     # load build_configuration.py from workdir
+    # https://stackoverflow.com/a/67692
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 5:
         import importlib.util
         spec = importlib.util.spec_from_file_location(args.build_config_file, args.build_config_file)
