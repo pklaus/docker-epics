@@ -17,6 +17,7 @@ def main():
     parser_render = subparsers.add_parser('list-tags', help='Returns the list of available tags')
     parser_render = subparsers.add_parser('render', help='Render the template')
     parser_build =  subparsers.add_parser('build',  help='Render the template and build the image')
+    parser_build.add_argument('--squash', action='store_true', help='Use the squash option of the `docker build` command (experimental).')
     for template_parser in parser_render, parser_build:
         template_parser.add_argument('--tag', required=True, help='The tag to build (implies the base image to derive from).')
     args = parser.parse_args()
@@ -52,6 +53,7 @@ def main():
             f.write(content)
         # build
         if 'build' in args.action:
-            os.system('docker build -t {tag} .'.format(tag=args.tag))
+            extras = '--squash' if args.squash else ''
+            os.system('docker build {extras} -t {tag} .'.format(tag=args.tag, extras=extras))
 
 if __name__ == "__main__": main()

@@ -10,7 +10,7 @@ do
 
   for tag in $(../../docker_template.py list-tags)
   do
-    ../../docker_template.py build --tag pklaus/$repo:$tag
+    ../../docker_template.py build --squash --tag pklaus/$repo:$tag
   done
 
   cd -
