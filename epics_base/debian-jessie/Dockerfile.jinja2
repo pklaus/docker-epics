@@ -35,6 +35,7 @@ ENV EPICS_HOST_ARCH={{epics_host_arch}}
 
 RUN curl --insecure -L -O https://www.aps.anl.gov/epics/download/base/base-3.15.5.tar.gz \
  # as of 2018-01-11, the certificate is expired, thus the use of --insecure
+ && echo "b66b807baf07f24762a46d62521ded8e04cfbe71b14d43ab8ee65c870f6db07b base-3.15.5.tar.gz" | sha256sum -c - \
  && tar -xf base-3.15.5.tar.gz \
  && ln -s ./base-3.15.5 ./base
 

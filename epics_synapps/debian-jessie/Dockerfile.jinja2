@@ -23,6 +23,7 @@ WORKDIR /epics/modules
 RUN ls \
  && curl --insecure -L -O https://www1.aps.anl.gov/files/download/BCDA/synApps/tar/synApps_5_8.tar.gz \
  # as of 2018-01-11, the certificate is expired, thus the use of --insecure
+ && echo "cd0f89d8d439ce6dafb7099b9fccd368edfcb3f84142ca04e19a8ec876012f6d synApps_5_8.tar.gz" | sha256sum -c - \
  && tar -xf synApps_5_8.tar.gz \
  && rm synApps_5_8.tar.gz
 
