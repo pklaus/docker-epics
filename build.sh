@@ -3,6 +3,8 @@
 set -x
 set -e
 
+export PYTHONDONTWRITEBYTECODE=1
+
 for repo in epics_base epics_synapps
 do
 
