@@ -5,10 +5,10 @@ set -e
 
 export PYTHONDONTWRITEBYTECODE=1
 
-for repo in epics_base epics_synapps
+for flavour in epics_base/* epics_synapps/*
 do
-
-  cd $repo/debian-jessie
+  cd $flavour
+  repo=$(dirname $flavour)
 
   for tag in $(../../docker_template.py list-tags)
   do
