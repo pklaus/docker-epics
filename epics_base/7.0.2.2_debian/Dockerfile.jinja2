@@ -1,0 +1,88 @@
+FROM {{ base_img }}
+
+MAINTAINER Philipp Klaus <philipp.l.klaus@web.de>
+
+{% if cross_build %}
+RUN [ "cross-build-start" ]
+{% endif %}
+
+USER root
+
+RUN apt-get update \
+ && apt-get install --no-install-recommends -yq \
+  # for epics_base:
+  build-essential \
+  telnet \
+  curl \
+  ca-certificates \
+  libreadline-dev \
+  # generally good: \
+  #git \
+  # areadetector dependencies:
+  #libhdf5-dev \
+  #libx11-dev \
+  #libxext-dev \
+  #libxml2-dev \
+  #libpng12-dev \
+  #libbz2-dev \
+  #libfreetype6-dev \
+ && apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /var/cache/apt
+
+RUN mkdir /epics && mkdir /epics/iocs
+
+WORKDIR /epics
+ENV EPICS_HOST_ARCH={{epics_host_arch}}
+
+# base-7.0.2.2.tar.gz from:
+# https://epics.anl.gov/download/base/base-7.0.2.2.tar.gz or
+# https://epics-controls.org/download/base/base-7.0.2.2.tar.gz \
+# check cryptographic hash w/:
+# echo "908f0161c9effb6adb74e40476a07e0f832e19ef589993740517911779187611 base-7.0.2.2.tar.gz" | sha256sum -c -
+ADD base-7.0.2.2.tar.gz ./
+RUN ln -s base-7.0.2.2 base
+
+RUN cd /epics/base && make -j8
+
+EXPOSE 5064-5065 5064-5065/udp
+
+ENV EPICS_ROOT=/epics
+ENV EPICS_BASE=${EPICS_ROOT}/base
+ENV EPICS_BASE_BIN=${EPICS_BASE}/bin/${EPICS_HOST_ARCH} \
+    EPICS_BASE_LIB=${EPICS_BASE}/lib/${EPICS_HOST_ARCH} \
+    LD_LIBRARY_PATH=${EPICS_BASE_LIB}:${LD_LIBRARY_PATH}
+ENV PATH=${PATH}:${EPICS_BASE_BIN}
+
+RUN echo $PATH $EPICS_ROOT $EPICS_BASE $EPICS_BASE_BIN
+
+#RUN echo "#!/bin/sh\necho linux-arm" > /epics/base/startup/EpicsHostArch
+#RUN chmod +x /epics/base/startup/EpicsHostArch
+
+### add user for control stuff
+
+RUN useradd \
+      --create-home \
+      --home /scs \
+      --gid users \
+      --groups users \
+      --shell /bin/bash \
+      scs
+
+### example IOC
+
+ENV USER root
+#USER scs
+#ENV USER scs
+
+RUN mkdir -p /epics/iocs/example \
+ && cd /epics/iocs/example \
+ && makeBaseApp.pl -t example EXAMPLE \
+ && make \
+ && makeBaseApp.pl -i -t example EXAMPLE \
+ && make \
+ && chmod +x iocBoot/iocEXAMPLE/st.cmd
+
+CMD /bin/bash
+
+{% if cross_build %}
+RUN [ "cross-build-end" ]
+{% endif %}
