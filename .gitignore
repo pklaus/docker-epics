@@ -1,2 +1,4 @@
 Dockerfile
+base-3.*.tar.gz
+base-7.*.tar.gz
 __pycache__
