@@ -55,6 +55,6 @@ def main():
         # build
         if 'build' in args.action:
             extras = '--squash' if args.squash else ''
-            os.system('docker build {extras} -t {tag} .'.format(tag=args.tag, extras=extras))
+            os.system('time docker build {extras} -t {tag} .'.format(tag=args.tag, extras=extras))
 
 if __name__ == "__main__": main()
