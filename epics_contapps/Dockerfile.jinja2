@@ -1,0 +1,71 @@
+# ==========================================================
+# Use a throw-away container to download and extract modules
+# ==========================================================
+FROM --platform=$TARGETPLATFORM debian:buster AS download-extract
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -yq wget ca-certificates
+
+WORKDIR /dl
+
+{% for m in modules %}
+# {{m.derive_release_name}}
+RUN wget -q --show-progress --progress=bar:force {{m.derive_tarball_url}} \
+ && mkdir {{m.derive_module_folder}} \
+ && tar --strip=1 -xf {{m.derive_tarball_name}} -C {{m.derive_module_folder}} \
+ && rm {{m.derive_tarball_name}}
+
+{% endfor %}
+
+# =================================================================
+# Image with all dependencies installed. Used for builder and final
+# =================================================================
+FROM --platform=$TARGETPLATFORM pklaus/epics_base:3.15.6_debian AS base
+
+{% if debian_deps %}
+USER root
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && apt-get update \
+ && apt-get install --no-install-suggests --no-install-recommends -yq \
+    {% for debian_dep in debian_deps %}
+    {{ debian_dep }} \
+    {% endfor %}
+ && apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /var/cache/apt
+{% endif %}
+
+USER scs
+
+# ============================================================
+# Now derive from our epics_base image and compile the modules
+# ============================================================
+FROM base AS builder
+
+RUN mkdir /epics/modules
+
+{% for m in modules %}
+# {{m.derive_release_name}}
+ENV MODULE_FOLDER=/epics/modules/{{m.derive_module_folder}}
+COPY --from=download-extract --chown=scs:users /dl/{{m.derive_module_folder}} ${MODULE_FOLDER}
+RUN cat >${MODULE_FOLDER}/configure/RELEASE <<<$'\
+TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top\n\
+SUPPORT=/epics/modules\n\
+{% for line in m.add_to_release %}
+{{line}}\n\
+{% endfor %}
+{% for req in m.required_modules(available=modules) %}
+{{req.derive_release_name}}=$(SUPPORT)/{{req.derive_module_folder}}\n\
+{% endfor %}
+EPICS_BASE=/epics/base\n\
+-include $(TOP)/../RELEASE.local\n\
+-include $(TOP)/../RELEASE.$(EPICS_HOST_ARCH).local\n\
+-include $(TOP)/configure/RELEASE.local\n'
+RUN cd ${MODULE_FOLDER} && make -s -j$(nproc)
+
+{% endfor %}
+
+# ====================================================================
+# And derive again from base to squash all the image layers of builder
+# ====================================================================
+FROM --platform=$TARGETPLATFORM pklaus/epics_base:3.15.6_debian
+
+COPY --from=builder --chown=scs:users /epics/modules /epics/modules
