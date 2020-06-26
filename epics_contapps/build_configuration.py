@@ -60,10 +60,12 @@ def get_module_and_requirements(name, gathered_modules=None):
 
 BUILDS = {
   "modbus": {
+    "base_img": "pklaus/epics_base:3.15.6_debian",
     "modules": get_module_and_requirements("modbus"),
     "debian_deps": ["calculated below..."],
   },
   "1-0-0": {
+    "base_img": "pklaus/epics_base:7.0.4_debian",
     "modules": all_modules,
     "debian_deps": ["calculated below..."],
   },
@@ -75,7 +77,7 @@ for tag, build_config in BUILDS.items():
     debian_deps = set(itertools.chain(*debian_deps))
     build_config["debian_deps"] = sorted(list(debian_deps))
 
-# Validate build configuration: module inter-dependencies
+# Validate module inter-dependencies for each build configuration
 for tag, build_config in BUILDS.items():
     modules = build_config["modules"]
     for m in modules:

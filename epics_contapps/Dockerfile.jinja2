@@ -1,7 +1,7 @@
 # ==========================================================
 # Use a throw-away container to download and extract modules
 # ==========================================================
-FROM --platform=$TARGETPLATFORM debian:buster AS download-extract
+FROM debian:10-slim AS download-extract
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -yq wget ca-certificates
@@ -20,7 +20,7 @@ RUN wget -q --show-progress --progress=bar:force {{m.derive_tarball_url}} \
 # =================================================================
 # Image with all dependencies installed. Used for builder and final
 # =================================================================
-FROM --platform=$TARGETPLATFORM pklaus/epics_base:3.15.6_debian AS base
+FROM {{ base_img }} AS base
 
 {% if debian_deps %}
 USER root
@@ -63,9 +63,9 @@ RUN cd ${MODULE_FOLDER} && make -s -j$(nproc)
 
 {% endfor %}
 
-# ====================================================================
-# And derive again from base to squash all the image layers of builder
-# ====================================================================
-FROM --platform=$TARGETPLATFORM pklaus/epics_base:3.15.6_debian
+# ======================================================
+# Final image: to squash all the image layers of builder
+# ======================================================
+FROM base AS final
 
 COPY --from=builder --chown=scs:users /epics/modules /epics/modules
