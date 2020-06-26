@@ -2,26 +2,12 @@
 # Start with an intermediate image only for downloading / extracting / ...
 # ========================================================================
 FROM --platform=$TARGETPLATFORM debian:10-slim AS download-extract
-RUN apt-get update && apt-get install -yq wget git
+RUN apt-get update && apt-get install -yq wget
 WORKDIR /var/cache
-RUN wget -q --show-progress https://epics.anl.gov/download/base/base-7.0.4.tar.gz \
+RUN wget -q --show-progress https://epics.anl.gov/download/base/base-3.15.6.tar.gz \
  && mkdir /epics/ \
- && tar -xf base-7.0.4.tar.gz -C /epics \
- && rm base-7.0.4.tar.gz
-
-
-# The release base-7.0.4.tar.gz already contains
-# https://github.com/epics-base/epics-base/archive/R7.0.4.tar.gz
-# and all of the following modules:
-# https://github.com/epics-base/pvDataCPP/archive/8.0.2.tar.gz
-# https://github.com/epics-base/pva2pva/archive/1.2.3.tar.gz
-# https://github.com/epics-base/pvAccessCPP/archive/7.1.1.tar.gz
-# https://github.com/epics-base/pvDatabaseCPP/archive/4.5.2.tar.gz
-# https://github.com/epics-base/pvaClientCPP/archive/4.7.1.tar.gz
-# https://github.com/epics-base/normativeTypesCPP/archive/6.0.1.tar.gz
-
-RUN git clone --single-branch --depth 1 https://github.com/epics-base/exampleCPP.git /exampleCPP \
- && rm -rf /exampleCPP/.git
+ && tar -xf base-3.15.6.tar.gz -C /epics \
+ && rm base-3.15.6.tar.gz
 
 # ============================
 #  Now start the final image
@@ -72,7 +58,7 @@ USER scs
 ENV USER=scs
 WORKDIR /epics
 COPY --from=download-extract --chown=scs:users /epics /epics
-RUN ln -s base-7.0.4 base
+RUN ln -s base-3.15.6 base
 RUN cd /epics/base && make -j$(nproc)
 ENV EPICS_ROOT=/epics
 ENV EPICS_BASE=${EPICS_ROOT}/base
@@ -83,8 +69,8 @@ ENV PATH=${PATH}:${EPICS_BASE_BIN}
 RUN echo -e "#!/bin/sh\necho ${EPICS_HOST_ARCH}" > /epics/base/startup/EpicsHostArch \
  && chmod +x /epics/base/startup/EpicsHostArch
 
-# Example IOCs
-# ============
+# Example IOC
+# ===========
 
 # classic example IOC:
 RUN mkdir -p /epics/iocs/example \
@@ -96,19 +82,6 @@ RUN mkdir -p /epics/iocs/example \
  && chmod +x iocBoot/iocEXAMPLE/st.cmd
 # (to set the classic example IOC as default command:)
 #WORKDIR /epics/iocs/example/iocBoot/iocEXAMPLE
-#CMD ./st.cmd
-
-# EPICS V4 / R7 example IOC:
-COPY --from=download-extract --chown=scs:users /exampleCPP /epics/iocs/exampleCPP
-WORKDIR /epics/iocs/exampleCPP
-COPY RELEASE.local.exampleCPP configure/RELEASE.local
-RUN make -j$(nproc)
-RUN cd database/iocBoot/exampleDatabase/ \
- && sed -i '1i#!../../bin/*/exampleDatabase\n' st.cmd \
- && echo -e '\ndbl\npvdbl\n' >> st.cmd \
- && chmod +x st.cmd
-# (to set the EPICS V4 / R7 exampleCPP IOC as default command:)
-#WORKDIR /epics/iocs/exampleCPP/database/iocBoot/exampleDatabase
 #CMD ./st.cmd
 
 WORKDIR /epics
