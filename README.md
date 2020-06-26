@@ -1,18 +1,18 @@
 
 ### epics\_docker
 
-This repository contains Dockerfiles to create docker images for:
+This repository contains the source files (Dockerfiles, ...) to create the images:
 
-* A distribution of **epics base**
-    * in the folder [`epics_base`](./epics_base/)
-    * with pre-built images on Docker Hub: [pklaus/epics\_base][])
-* a distribution of many frequently needed EPICS modules named **contApps**
-  (counterpart of synApps tailored to the container world)
-    * in the folder [`epics_contapps`](./epics_contapps/)
-    * with pre-built images on Docker Hub: [pklaus/epics\_contapps][])
-* a (**deprecated**) distribution of **synApps**
-    * in the folder [`old_images/01/epics_synapps/`](old_images/01/epics_synapps/)
-    * with pre-built images on Docker Hub: [pklaus/epics\_contapps][])
+* [pklaus/epics\_base][] on Docker Hub
+    * **EPICS Base** 3.x / 7.x in a Docker container
+    * source in folder [`./epics_base`](./epics_base)
+* [pklaus/epics\_contapps][] on Docker Hub
+    * **contApps**: a distribution of many frequently needed EPICS modules
+      (a counterpart of synApps tailored to the container world)
+    * source in folder [`./epics_contapps`](./epics_contapps)
+* [pklaus/epics\_synapps][] on Docker Hub (*deprecated!*)
+    * **synApps**, a common distribution of EPICS modules
+    * now moved to the subfolder [`./old_images/01/epics_synapps`](./old_images/01/epics_synapps)
 
 #### epics\_base
 
