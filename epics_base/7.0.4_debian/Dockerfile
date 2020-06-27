@@ -104,7 +104,7 @@ WORKDIR /epics/iocs/exampleCPP
 COPY RELEASE.local.exampleCPP configure/RELEASE.local
 RUN make -j$(nproc)
 RUN cd database/iocBoot/exampleDatabase/ \
- && sed -i '1i#!../../bin/*/exampleDatabase\n' st.cmd \
+ && sed -i "1i#!../../bin/${EPICS_HOST_ARCH}/exampleDatabase\n" st.cmd \
  && echo -e '\ndbl\npvdbl\n' >> st.cmd \
  && chmod +x st.cmd
 # (to set the EPICS V4 / R7 exampleCPP IOC as default command:)
