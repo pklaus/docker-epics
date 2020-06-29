@@ -1,5 +1,5 @@
 
-### epics\_docker
+### docker-epics
 
 This repository contains the source files (Dockerfiles, ...) to create the images:
 
