@@ -2,6 +2,7 @@
 # Start with an intermediate image only for downloading / extracting / ...
 # ========================================================================
 FROM --platform=$TARGETPLATFORM debian:10-slim AS download-extract
+SHELL ["/bin/bash", "-c"]
 RUN apt-get update && apt-get install -yq wget git
 WORKDIR /var/cache
 RUN wget -q --show-progress https://epics.anl.gov/download/base/base-7.0.4.tar.gz \
@@ -9,6 +10,13 @@ RUN wget -q --show-progress https://epics.anl.gov/download/base/base-7.0.4.tar.g
  && tar -xf base-7.0.4.tar.gz -C /epics \
  && rm base-7.0.4.tar.gz
 
+## Adding PCAS library (not part of EPICS 7.x by default anymore)
+RUN wget -q --show-progress https://github.com/epics-modules/pcas/archive/v4.13.2.tar.gz \
+ && mkdir /epics/base-7.0.4/modules/pcas \
+ && tar -xf v4.13.2.tar.gz --strip-components=1 -C /epics/base-7.0.4/modules/pcas/ \
+ && echo -e "SUBMODULES += pcas\npcas_DEPEND_DIRS = libcom" > /epics/base-7.0.4/modules/Makefile.local \
+ && echo '-include $(TOP)/../RELEASE.$(EPICS_HOST_ARCH).local' >> /epics/base-7.0.4/modules/pcas/configure/RELEASE \
+ && rm v4.13.2.tar.gz
 
 # The release base-7.0.4.tar.gz already contains
 # https://github.com/epics-base/epics-base/archive/R7.0.4.tar.gz
