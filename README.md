@@ -22,14 +22,16 @@ quick testing.
 
 To start the example IOC in background (-d), run:
 
-    docker run \
-      -d -i -t \
-      --rm \
-      -p 5064-5065:5064-5065 \
-      -p 5064-5065:5064-5065/udp \
-      -w /epics/iocs/example/iocBoot/iocEXAMPLE \
-      pklaus/epics_base:7.0.4_debian \
-      ./st.cmd
+```bash
+docker run \
+  -d -i -t \
+  --rm \
+  -p 5064-5065:5064-5065 \
+  -p 5064-5065:5064-5065/udp \
+  -w /epics/iocs/example/iocBoot/iocEXAMPLE \
+  pklaus/epics_base:7.0.4_debian \
+  ./st.cmd
+```
 
 To attach to the IOC shell, run:
 
