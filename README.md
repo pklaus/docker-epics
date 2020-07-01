@@ -24,8 +24,8 @@ To start the example IOC in background (-d), run:
 
 ```bash
 docker run \
-  -d -i -t \
-  --rm \
+  --rm -it -d \
+  --name my-ioc \
   -p 5064-5065:5064-5065 \
   -p 5064-5065:5064-5065/udp \
   -w /epics/iocs/example/iocBoot/iocEXAMPLE \
@@ -35,7 +35,7 @@ docker run \
 
 To attach to the IOC shell, run:
 
-    docker attach $(docker ps -q)
+    docker attach my-ioc
 
 Enter <kbd>Ctrl + p</kbd> <kbd>Ctrl + q</kbd> to detach from the shell or <kbd>Ctrl + d</kbd> to quit the IOC.
 
