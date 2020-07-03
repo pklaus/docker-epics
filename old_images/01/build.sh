@@ -1,18 +1,16 @@
-#!/bin/bash
+#!/bin/bash -ex
 
-set -x
-set -e
-
-export PYTHONDONTWRITEBYTECODE=1
+export DOCKER_BUILDKIT=1
 
 for flavour in epics_base/* epics_synapps/*
 do
   cd $flavour
   repo=$(dirname $flavour)
 
-  for tag in $(../../docker_template.py list-tags)
+  for tag in $(jinja2-render)
   do
-    ../../docker_template.py build --squash --tag pklaus/$repo:$tag
+    jinja2-render $tag
+    docker build --squash --tag pklaus/$repo:$tag .
   done
 
   cd -

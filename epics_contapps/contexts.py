@@ -58,7 +58,7 @@ def get_module_and_requirements(name, gathered_modules=None):
             get_module_and_requirements(required_module_name, gathered_modules)
     return gathered_modules
 
-BUILDS = {
+CONTEXTS = {
   "modbus": {
     "base_img": "pklaus/epics_base:3.15.6_debian",
     "modules": get_module_and_requirements("modbus"),
@@ -72,16 +72,16 @@ BUILDS = {
 }
 
 # Automatically put together required debian packages "debian_deps"
-for tag, build_config in BUILDS.items():
-    debian_deps = [m.debian_deps for m in build_config["modules"]]
+for name, context in CONTEXTS.items():
+    debian_deps = [m.debian_deps for m in context["modules"]]
     debian_deps = set(itertools.chain(*debian_deps))
-    build_config["debian_deps"] = sorted(list(debian_deps))
+    context["debian_deps"] = sorted(list(debian_deps))
 
-# Validate module inter-dependencies for each build configuration
-for tag, build_config in BUILDS.items():
-    modules = build_config["modules"]
+# Validate module inter-dependencies for each build context
+for name, context in CONTEXTS.items():
+    modules = context["modules"]
     for m in modules:
         for req_name in m.requires:
             found = any(req_name == om.name for om in modules)
             if not found:
-                raise RuntimeError(f"BUILDS[{tag}]: module {m.name} requires {req_name} but it's not part of the modules list.")
+                raise RuntimeError(f"CONTEXTS[{name}]: module {m.name} requires {req_name} but it's not part of the modules list.")

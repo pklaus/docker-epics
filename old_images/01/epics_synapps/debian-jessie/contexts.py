@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-BUILDS = {
+CONTEXTS = {
     # tag name:                          template settings
     'debian-jessie':                     {'base_img': 'pklaus/epics_base:debian-jessie', 'cross_build': False},
     'resin-raspberry-pi-debian-jessie':  {'base_img': 'pklaus/epics_base:resin-raspberry-pi-debian-jessie', 'cross_build': True},
