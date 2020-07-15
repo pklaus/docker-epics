@@ -55,7 +55,6 @@ ENV EPICS_HOST_ARCH=linux-arm
 # Now finally choose the right base image:
 FROM base-$TARGETARCH AS final
 SHELL ["/bin/bash", "-c"]
-EXPOSE 5064-5065 5064-5065/udp
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
  && apt-get install --no-install-recommends -yq \
@@ -95,6 +94,7 @@ RUN echo -e "#!/bin/sh\necho ${EPICS_HOST_ARCH}" > /epics/base/startup/EpicsHost
 # ============
 
 # classic example IOC:
+EXPOSE 5064-5065 5064-5065/udp
 RUN mkdir -p /epics/iocs/example \
  && cd /epics/iocs/example \
  && makeBaseApp.pl -t example EXAMPLE \
@@ -107,6 +107,7 @@ RUN mkdir -p /epics/iocs/example \
 #CMD ./st.cmd
 
 # EPICS V4 / R7 example IOC:
+EXPOSE 5075 5076/udp
 COPY --from=download-extract --chown=scs:users /exampleCPP /epics/iocs/exampleCPP
 WORKDIR /epics/iocs/exampleCPP
 COPY RELEASE.local.exampleCPP configure/RELEASE.local
