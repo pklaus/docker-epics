@@ -64,7 +64,7 @@ CONTEXTS = {
     "modules": get_module_and_requirements("modbus"),
     "debian_deps": ["calculated below..."],
   },
-  "1-0-0": {
+  "1-0-1": {
     "base_img": "pklaus/epics_base:7.0.4_debian",
     "modules": all_modules,
     "debian_deps": ["calculated below..."],
