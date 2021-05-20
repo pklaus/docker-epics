@@ -107,6 +107,7 @@ RUN mkdir -p /epics/iocs/example \
 #CMD ./st.cmd
 
 # EPICS V4 / R7 example IOC:
+EXPOSE 5064-5065 5064-5065/udp
 EXPOSE 5075 5076/udp
 COPY --from=download-extract --chown=scs:users /exampleCPP /epics/iocs/exampleCPP
 WORKDIR /epics/iocs/exampleCPP
